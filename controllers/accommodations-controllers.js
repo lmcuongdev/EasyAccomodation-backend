@@ -1,5 +1,5 @@
 const { validationResult } = require("express-validator");
-const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 const dot = require("dot-object");
 
 const { deletePropertyPath } = require("../util/helper");
@@ -7,6 +7,7 @@ const { deletePropertyPath } = require("../util/helper");
 const HttpError = require("../models/http-error");
 const User = require("../models/user");
 const Accommodation = require("../models/accommodation");
+const Review = require("../models/review");
 
 module.exports = {
   getAll: async (req, res, next) => {
@@ -24,18 +25,7 @@ module.exports = {
   },
 
   getOne: async (req, res, next) => {
-    let accommodation;
-    try {
-      accommodation = await Accommodation.findById(req.params.aid).lean();
-      if (!accommodation) throw new Error();
-    } catch (err) {
-      const error = new HttpError(
-        "No accommodation with the provided id exists",
-        404
-      );
-      return next(error);
-    }
-    res.json({ accommodation });
+    res.json({ accommodation: req.accommodation });
   },
 
   getAllByUserId: async (req, res, next) => {
@@ -83,15 +73,7 @@ module.exports = {
     const { role, userId } = req.userData;
     const isAdmin = role === "admin";
 
-    let accommod;
-    try {
-      accommod = await Accommodation.findById(req.params.aid);
-
-      // if not found then throw error
-      if (!accommod) throw new Error();
-    } catch (err) {
-      return next(new HttpError("Provided accommodation id not exists", 404));
-    }
+    const accommod = req.accommodation;
 
     const updatedData = req.body;
 
@@ -126,15 +108,7 @@ module.exports = {
     const { role, userId } = req.userData;
     const isAdmin = role === "admin";
 
-    let accommod;
-    try {
-      accommod = await Accommodation.findById(req.params.aid);
-
-      // if not found then throw error
-      if (!accommod) throw new Error();
-    } catch (err) {
-      return next(new HttpError("Provided accommodation id not exists", 404));
-    }
+    const accommod = req.accommodation;
 
     if (!accommod.belongsTo(userId) && !isAdmin) {
       return next(new HttpError("You are not allowed", 403));
@@ -147,5 +121,61 @@ module.exports = {
     }
 
     res.json({ status: "success", message: "Successfully Deleted" });
+  },
+
+  getReviews: async (req, res, next) => {
+    let accommod;
+
+    try {
+      accommod = await Accommodation.populate(req.accommodation, {
+        path: "reviews",
+        populate: "author",
+      });
+    } catch (err) {
+      return next(new HttpError("Something went wrong", 500));
+    }
+
+    res.json({ reviews: accommod.reviews });
+  },
+
+  createReview: async (req, res, next) => {
+    const session = await mongoose.startSession();
+
+    // start transaction
+    session.startTransaction();
+
+    const { comment, rating } = req.body;
+
+    const data = {
+      author: req.userData.userId,
+      accommodation: req.accommodation._id,
+      comment,
+      rating,
+      status: req.userData.role === "admin" ? "verified" : "pending",
+    };
+
+    let review;
+    try {
+      review = new Review(data);
+    } catch (err) {
+      return next(
+        new HttpError("Invalid inputs passed, please check your data.", 422)
+      );
+    }
+    try {
+      await review.save({ session });
+      await review.populate("accommodation").execPopulate();
+
+      review.accommodation.reviews.push(review.id);
+
+      await review.accommodation.save({ session });
+      await session.commitTransaction();
+
+      // await session.abortTransaction();
+    } catch (err) {
+      return next(new HttpError("Something went wrong", 500));
+    }
+
+    res.json({ review: { ...data, _id: review.id } });
   },
 };

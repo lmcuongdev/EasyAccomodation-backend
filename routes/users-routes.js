@@ -24,8 +24,6 @@ router.post(
 
 router.post("/login", usersController.login);
 
-router.post("/test", (req, res) => res.json(req.body));
-
 // must be authenticated from here
 router.use(checkAuth);
 

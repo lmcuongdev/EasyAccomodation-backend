@@ -1,4 +1,6 @@
 const mongoose = require("mongoose");
+const mongooseLeanVirtuals = require("mongoose-lean-virtuals");
+
 const { deletePropertyPath } = require("../util/helper");
 
 const accommodationSchema = mongoose.Schema({
@@ -95,6 +97,8 @@ accommodationSchema.statics.protected = [
   "views",
 ];
 
+accommodationSchema.plugin(mongooseLeanVirtuals);
+
 accommodationSchema.statics.safeCreate = function (data, owner) {
   // filter update data for mass assignment
   for (const prop of accommodationSchema.statics.protected) {
@@ -117,7 +121,7 @@ accommodationSchema.virtual("is_verified").get(function () {
 });
 
 accommodationSchema.virtual("is_visible").get(function () {
-  return this.status === "verified" || Date.now() < this.end_date.getTime();
+  return this.status === "verified" && Date.now() < this.end_date.getTime();
 });
 
 module.exports = mongoose.model("Accommodation", accommodationSchema);
