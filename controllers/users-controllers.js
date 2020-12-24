@@ -3,6 +3,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const dot = require("dot-object");
 
+const { deletePropertyPath } = require("../util/helper");
+
 const HttpError = require("../models/http-error");
 const User = require("../models/user");
 
@@ -42,6 +44,7 @@ module.exports = {
     let user;
     try {
       user = await User.findById(req.params.uid).lean({ virtuals: true });
+      if (!user) throw new Error();
     } catch (err) {
       return next(new HttpError("Provided user id not exists"));
     }
@@ -53,7 +56,7 @@ module.exports = {
     const updatedData = req.body;
     // filter update data for mass assignment
     for (const prop of user.protected) {
-      delete updatedData[prop];
+      deletePropertyPath(updatedData, prop);
     }
 
     try {

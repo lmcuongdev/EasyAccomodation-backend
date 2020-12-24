@@ -2,6 +2,8 @@ const { validationResult } = require("express-validator");
 const jwt = require("jsonwebtoken");
 const dot = require("dot-object");
 
+const { deletePropertyPath } = require("../util/helper");
+
 const HttpError = require("../models/http-error");
 const User = require("../models/user");
 const Accommodation = require("../models/accommodation");
@@ -45,7 +47,7 @@ module.exports = {
       );
     }
 
-    const { userId, role } = req.userData;
+    const { role } = req.userData;
 
     // only owner and admin is allowed
     if (role === "renter") {
@@ -55,7 +57,7 @@ module.exports = {
     // create new accommodation
     let accommod;
     try {
-      accommod = await Accommodation.safeCreate(req.body, userId);
+      accommod = await Accommodation.safeCreate(req.body, req.userData);
     } catch (err) {
       return next(new HttpError(err.message, 422));
     }
@@ -68,26 +70,35 @@ module.exports = {
   update: async (req, res, next) => {
     const { role, userId } = req.userData;
     const isAdmin = role === "admin";
-    let user;
-    try {
-      user = await User.findById(req.params.uid).lean({ virtuals: true });
-    } catch (err) {
-      return next(new HttpError("Provided user id not exists"));
-    }
 
-    if (!isAdmin && user._id.toString() !== userId) {
-      return next(new HttpError("You are not allowed", 403));
+    let accommod;
+    try {
+      accommod = await Accommodation.findById(req.params.aid);
+
+      // if not found then throw error
+      if (!accommod) throw new Error();
+    } catch (err) {
+      return next(new HttpError("Provided accommodation id not exists"));
     }
 
     const updatedData = req.body;
-    // filter update data for mass assignment
-    for (const prop of user.protected) {
-      delete updatedData[prop];
-    }
 
+    if (!isAdmin) {
+      // not allowed to pass
+      if (!accommod.belongsTo(userId) || accommod.is_verified) {
+        return next(new HttpError("You are not allowed", 403));
+      }
+
+      // user is owner
+      // filter update data for mass assignment if user is owner
+      for (const prop of Accommodation.protected) {
+        deletePropertyPath(updatedData, prop);
+      }
+    }
     try {
-      const updated = await User.findOneAndUpdate(
-        { _id: user._id },
+      console.log(dot.dot({}));
+      const updated = await Accommodation.findOneAndUpdate(
+        { _id: accommod.id },
         {
           $set: dot.dot(updatedData),
         },
@@ -99,67 +110,30 @@ module.exports = {
     }
   },
 
-  login: async (req, res, next) => {
-    const { email, password } = req.body;
+  delete: async (req, res, next) => {
+    const { role, userId } = req.userData;
+    const isAdmin = role === "admin";
 
-    let existingUser;
+    let accommod;
+    try {
+      accommod = await Accommodation.findById(req.params.aid);
+
+      // if not found then throw error
+      if (!accommod) throw new Error();
+    } catch (err) {
+      return next(new HttpError("Provided accommodation id not exists"));
+    }
+
+    if (!accommod.belongsTo(userId) && !isAdmin) {
+      return next(new HttpError("You are not allowed", 403));
+    }
 
     try {
-      existingUser = await User.findOne({ email: email });
+      await accommod.remove();
     } catch (err) {
-      const error = new HttpError(
-        "Logging in failed, please try again later.",
-        500
-      );
-      return next(error);
+      return next(new HttpError(err.message, 500));
     }
 
-    if (!existingUser) {
-      const error = new HttpError(
-        "Invalid credentials, could not log you in.",
-        401
-      );
-      return next(error);
-    }
-
-    let isValidPassword = false;
-    try {
-      isValidPassword = await bcrypt.compare(password, existingUser.password);
-    } catch (err) {
-      const error = new HttpError(
-        "Could not log you in, please check your credentials and try again.",
-        500
-      );
-      return next(error);
-    }
-
-    if (!isValidPassword) {
-      const error = new HttpError(
-        "Invalid credentials, could not log you in.",
-        401
-      );
-      return next(error);
-    }
-
-    let token;
-    try {
-      token = createToken({
-        userId: existingUser.id,
-        email: existingUser.email,
-        role: existingUser.role,
-      });
-    } catch (err) {
-      const error = new HttpError(
-        "Logging in failed, please try again later.",
-        500
-      );
-      return next(error);
-    }
-
-    res.json({
-      userId: existingUser.id,
-      ...existingUser.toObject(),
-      token: token,
-    });
+    res.json({ status: "success", message: "Successfully Deleted" });
   },
 };

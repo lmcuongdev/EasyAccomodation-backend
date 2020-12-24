@@ -19,11 +19,19 @@ router.use(checkAuth);
 router.post(
   "/create",
   // fileUpload.single("image"),
+  [
+    check("type").isIn([
+      "motel",
+      "mini-apartment",
+      "apartment",
+      "detached-house",
+    ]),
+  ],
   accommodControllers.create
 );
 
-// router.put("/:pid", accommodControllers.update);
+router.put("/:aid", accommodControllers.update);
 
-// router.delete("/:pid", accommodControllers.delete);
+router.delete("/:aid", accommodControllers.delete);
 
 module.exports = router;

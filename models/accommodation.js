@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { deletePropertyPath } = require("../util/helper");
 
 const accommodationSchema = mongoose.Schema({
   // xã/phường
@@ -67,6 +68,10 @@ const accommodationSchema = mongoose.Schema({
     required: true,
     default: () => Date.now() + 30 * 24 * 60 * 60 * 1000,
   },
+
+  // contact info
+  name: { type: String, required: true },
+  phone: { type: String, required: true },
 });
 
 accommodationSchema.statics.protected = [
@@ -75,33 +80,30 @@ accommodationSchema.statics.protected = [
   "status",
   "owner",
   "views",
-  "publication_date",
-  "end_date",
 ];
 
 accommodationSchema.statics.safeCreate = function (data, owner) {
   // filter update data for mass assignment
   for (const prop of accommodationSchema.statics.protected) {
-    delete data[prop];
+    deletePropertyPath(data, prop);
   }
 
-  data.status = "pending";
-  data.owner = owner;
+  data.owner = owner.userId;
+
+  data.status = owner.role === "admin" ? "verified" : "pending";
 
   return this.create(data);
 };
 
-// accommodationSchema.virtual("protected").get(() => {
-//   return ["reviews", "images"].concat([
-//     "status",
-//     "owner",
-//     "views",
-//     "publication_date",
-//     "end_date",
-//   ]);
-// });
+accommodationSchema.methods.belongsTo = function (userId) {
+  return this.owner.toString() === userId;
+};
 
-accommodationSchema.virtual("is_visible").get(() => {
+accommodationSchema.virtual("is_verified").get(function () {
+  return this.status === "verified";
+});
+
+accommodationSchema.virtual("is_visible").get(function () {
   return this.status === "verified" || Date.now() < this.end_date.getTime();
 });
 
