@@ -9,11 +9,9 @@ const fileUpload = require("../middleware/file-upload");
 const router = express.Router();
 
 router.get("/", accommodControllers.getAll);
+router.get("/:aid", accommodControllers.getOne);
 
-router.get("/:pid", accommodControllers.getOne);
-
-// router.get("/user/:uid", accommodControllers.getAllByUserId);
-
+// must be authenticated
 router.use(checkAuth);
 
 router.post(
@@ -29,9 +27,7 @@ router.post(
   ],
   accommodControllers.create
 );
-
 router.put("/:aid", accommodControllers.update);
-
 router.delete("/:aid", accommodControllers.delete);
 
 module.exports = router;

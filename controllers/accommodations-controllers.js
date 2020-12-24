@@ -26,7 +26,8 @@ module.exports = {
   getOne: async (req, res, next) => {
     let accommodation;
     try {
-      accommodation = await User.findOne({ _id: req.params.uid }).lean();
+      accommodation = await Accommodation.findById(req.params.aid).lean();
+      if (!accommodation) throw new Error();
     } catch (err) {
       const error = new HttpError(
         "No accommodation with the provided id exists",
@@ -35,6 +36,17 @@ module.exports = {
       return next(error);
     }
     res.json({ accommodation });
+  },
+
+  getAllByUserId: async (req, res, next) => {
+    let accommodations;
+    try {
+      accommodations = await User.getAccommodations(req.params.uid);
+    } catch (err) {
+      return next(new HttpError("Provided user id not exists", 404));
+    }
+
+    res.json({ accommodations });
   },
 
   create: async (req, res, next) => {
@@ -78,7 +90,7 @@ module.exports = {
       // if not found then throw error
       if (!accommod) throw new Error();
     } catch (err) {
-      return next(new HttpError("Provided accommodation id not exists"));
+      return next(new HttpError("Provided accommodation id not exists", 404));
     }
 
     const updatedData = req.body;
@@ -121,7 +133,7 @@ module.exports = {
       // if not found then throw error
       if (!accommod) throw new Error();
     } catch (err) {
-      return next(new HttpError("Provided accommodation id not exists"));
+      return next(new HttpError("Provided accommodation id not exists", 404));
     }
 
     if (!accommod.belongsTo(userId) && !isAdmin) {

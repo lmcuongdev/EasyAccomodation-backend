@@ -1,5 +1,6 @@
 const express = require("express");
 const { check } = require("express-validator");
+const accommodationsControllers = require("../controllers/accommodations-controllers");
 
 const usersController = require("../controllers/users-controllers");
 const checkAuth = require("../middleware/check-auth");
@@ -25,7 +26,11 @@ router.post("/login", usersController.login);
 
 router.post("/test", (req, res) => res.json(req.body));
 
+// must be authenticated from here
 router.use(checkAuth);
+
 router.put("/:uid", usersController.updateUser);
+
+router.get("/:uid/accommodations", accommodationsControllers.getAllByUserId);
 
 module.exports = router;

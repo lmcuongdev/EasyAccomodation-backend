@@ -1,7 +1,10 @@
+const { ObjectID } = require("mongodb");
 const mongoose = require("mongoose");
 const uniqueValidator = require("mongoose-unique-validator");
 const mongooseHidden = require("mongoose-hidden")();
 const mongooseLeanVirtuals = require("mongoose-lean-virtuals");
+
+const Accommodation = require("./accommodation");
 
 const userSchema = mongoose.Schema({
   email: { type: String, required: true, unique: true },
@@ -13,7 +16,12 @@ const userSchema = mongoose.Schema({
   favorites: [{ type: mongoose.Schema.Types.ObjectID, ref: "Accommodation" }],
 
   // 'renter', 'admin', 'owner'
-  role: { type: String, required: true, default: "renter" },
+  role: {
+    type: String,
+    required: true,
+    enum: ["renter", "owner", "admin"],
+    default: "renter",
+  },
 
   owner_info: {
     type: {
@@ -39,5 +47,9 @@ userSchema.virtual("protected").get(function () {
 
   return common.concat("owner_info");
 });
+
+userSchema.statics.getAccommodations = (userId) => {
+  return Accommodation.find({ owner: userId });
+};
 
 module.exports = mongoose.model("User", userSchema);

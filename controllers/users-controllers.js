@@ -41,6 +41,7 @@ module.exports = {
   updateUser: async (req, res, next) => {
     const { role, userId } = req.userData;
     const isAdmin = role === "admin";
+
     let user;
     try {
       user = await User.findById(req.params.uid).lean({ virtuals: true });
