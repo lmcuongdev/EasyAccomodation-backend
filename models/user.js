@@ -21,12 +21,6 @@ const userSchema = mongoose.Schema({
       address: { type: String, required: true },
       citizen_id: { type: String, required: true },
       phone: { type: String, required: true },
-      accommodations: [
-        {
-          type: mongoose.Schema.Types.ObjectID,
-          ref: "Accommodation",
-        },
-      ],
     },
   },
 });
@@ -40,10 +34,7 @@ userSchema.virtual("protected").get(function () {
 
   const common = ["_id", "email", "favorites", "role"];
   if (this.role === "owner" && !this.owner_info.is_verified) {
-    return common.concat([
-      "owner_info.is_verified",
-      "owner_info.accommodations",
-    ]);
+    return common.concat(["owner_info.is_verified"]);
   }
 
   return common.concat("owner_info");

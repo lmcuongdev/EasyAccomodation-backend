@@ -11,7 +11,11 @@ const accommodationSchema = mongoose.Schema({
   // địa chỉ cụ thể, VD: 144 Xuân Thủy
   address: { type: String, required: true },
   // Kiểu căn hộ: motel/mini-apartment/apartment/detached-house
-  type: { type: String, required: true },
+  type: {
+    type: String,
+    enum: ["motel", "mini-apartment", "apartment", "detached-house"],
+    required: true,
+  },
   number_of_room: {
     // Số phòng
     type: Number,
@@ -30,7 +34,11 @@ const accommodationSchema = mongoose.Schema({
 
   // khu bếp riêng/khu bếp chung/không nấu ăn
   // "private"/"common"/"none"
-  kitchen: { type: String, required: true },
+  kitchen: {
+    type: String,
+    enum: ["private", "common", "none"],
+    required: true,
+  },
   // Có điều hòa hay không ?
   has_air_condition: { type: Boolean, required: true },
   // Có ban công hay không ?
@@ -44,7 +52,12 @@ const accommodationSchema = mongoose.Schema({
   // Tình trạng phòng hiện tại còn trống hay đã cho thuê. False là còn trống
   is_available: { type: Boolean, required: true, default: true },
   // Phòng trọ đã được duyệt bởi admin, "pending","verified","not_verified"
-  status: { type: String, required: true, default: "pending" },
+  status: {
+    type: String,
+    required: true,
+    enum: ["pending", "verified", "not_verified"],
+    default: "pending",
+  },
 
   owner: { type: mongoose.Schema.Types.ObjectID, ref: "User", required: true },
 
