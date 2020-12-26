@@ -1,29 +1,29 @@
 const mongoose = require("mongoose");
 
-const reportSchema = mongoose.Schema({
-  renter: {
-    type: mongoose.Schema.Types.ObjectID,
-    ref: "User",
-    required: true,
-  },
+const reportSchema = mongoose.Schema(
+  {
+    reporter: {
+      type: mongoose.Schema.Types.ObjectID,
+      ref: "User",
+      required: true,
+    },
 
-  accommodation: {
-    type: mongoose.Schema.Types.ObjectID,
-    ref: "Accommodation",
-    required: true,
-  },
-  // Kiểu report
-  type: {
-    // "Not existed" / "Incorrect information" / "other"
-    type: "String",
-    default: "Not existed",
-  },
+    accommodation: {
+      type: mongoose.Schema.Types.ObjectID,
+      ref: "Accommodation",
+      required: true,
+    },
+    // Kiểu report
+    type: {
+      // "Not existed" / "Incorrect information" / "other"
+      type: String,
+      required: true,
+    },
 
-  // Nội dung của phần đánh giá
-  description: { type: String, default: "" },
-
-  // Ngày mà người dùng đánh giá
-  created_at: { type: Date, default: Date.now },
-});
+    // Nội dung của phần đánh giá
+    description: { type: String, default: "" },
+  },
+  { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
+);
 
 module.exports = mongoose.model("Report", reportSchema);

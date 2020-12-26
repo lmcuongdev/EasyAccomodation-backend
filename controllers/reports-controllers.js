@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const HttpError = require("../models/http-error");
 const Accommodation = require("../models/accommodation");
-const Review = require("../models/review");
+const Report = require("../models/report");
 
 module.exports = {
   getAllByAccommodId: async (req, res, next) => {
@@ -10,14 +10,14 @@ module.exports = {
 
     try {
       accommod = await Accommodation.populate(req.accommodation, {
-        path: "reviews",
+        path: "reports",
         populate: "author",
       });
     } catch (err) {
       return next(new HttpError("Something went wrong", 500));
     }
 
-    res.json({ reviews: accommod.reviews });
+    res.json({ reports: accommod.reports });
   },
 
   create: async (req, res, next) => {
@@ -26,20 +26,19 @@ module.exports = {
     // start transaction
     session.startTransaction();
 
-    const { comment, rating } = req.body;
+    const { type, description } = req.body;
 
     const data = {
-      author: req.userData.userId,
+      reporter: req.userData.userId,
       accommodation: req.accommodation._id,
-      comment,
-      rating,
-      status: req.userData.role === "admin" ? "verified" : "pending",
+      type,
+      description,
     };
 
-    let review;
+    let report;
     try {
-      review = new Review(data);
-      await review.save({ session });
+      report = new Report(data);
+      await report.save({ session });
     } catch (err) {
       return next(
         new HttpError("Invalid inputs passed, please check your data.", 422)
@@ -47,32 +46,30 @@ module.exports = {
     }
 
     try {
-      await review.populate("accommodation").execPopulate();
+      await report.populate("accommodation").execPopulate();
 
-      review.accommodation.reviews.push(review.id);
+      report.accommodation.reports.push(report.id);
 
-      await review.accommodation.save({ session });
+      await report.accommodation.save({ session });
       await session.commitTransaction();
 
       // await session.abortTransaction();
     } catch (err) {
-      return next(new HttpError("Something went wrong", 500));
+      return next(new HttpError(err.message || "Something went wrong", 500));
     }
 
-    res.json({ review: { ...data, _id: review.id } });
+    res.json({ report: { ...data, _id: report.id } });
   },
 
   getAll: async (req, res, next) => {
-    let reviews;
+    let reports;
+
     try {
-      reviews = await Review.find({}).lean();
+      reports = await Report.find({}).lean();
     } catch (err) {
-      const error = new HttpError(
-        "Fetching reviews failed, please try again later.",
-        500
-      );
-      return next(error);
+      return next(new HttpError("Something went wrong", 500));
     }
-    res.json({ reviews });
+
+    res.json({ reports });
   },
 };
