@@ -6,7 +6,7 @@ module.exports = async (req, res, next) => {
   let accommodation;
 
   try {
-    accommodation = await Accommodation.findById(req.params.aid).lean();
+    accommodation = await Accommodation.findById(req.params.aid);
     if (!accommodation) throw new Error();
   } catch (err) {
     console.log(err.message);
@@ -17,6 +17,6 @@ module.exports = async (req, res, next) => {
     return next(error);
   }
 
-  req.accommodation = { ...accommodation };
+  req.accommodation = accommodation;
   return next();
 };

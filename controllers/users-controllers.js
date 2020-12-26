@@ -16,7 +16,7 @@ module.exports = {
   getUsers: async (req, res, next) => {
     let users;
     try {
-      users = await User.find({}, "-password");
+      users = await User.find({}, "-password").lean();
     } catch (err) {
       const error = new HttpError(
         "Fetching users failed, please try again later.",
@@ -24,7 +24,7 @@ module.exports = {
       );
       return next(error);
     }
-    res.json({ users: users.map((user) => user.toObject()) });
+    res.json({ users });
   },
 
   getUserById: async (req, res, next) => {

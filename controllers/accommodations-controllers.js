@@ -1,5 +1,4 @@
 const { validationResult } = require("express-validator");
-const mongoose = require("mongoose");
 const dot = require("dot-object");
 
 const { deletePropertyPath } = require("../util/helper");
@@ -7,7 +6,6 @@ const { deletePropertyPath } = require("../util/helper");
 const HttpError = require("../models/http-error");
 const User = require("../models/user");
 const Accommodation = require("../models/accommodation");
-const Review = require("../models/review");
 
 module.exports = {
   getAll: async (req, res, next) => {
@@ -121,61 +119,5 @@ module.exports = {
     }
 
     res.json({ status: "success", message: "Successfully Deleted" });
-  },
-
-  getReviews: async (req, res, next) => {
-    let accommod;
-
-    try {
-      accommod = await Accommodation.populate(req.accommodation, {
-        path: "reviews",
-        populate: "author",
-      });
-    } catch (err) {
-      return next(new HttpError("Something went wrong", 500));
-    }
-
-    res.json({ reviews: accommod.reviews });
-  },
-
-  createReview: async (req, res, next) => {
-    const session = await mongoose.startSession();
-
-    // start transaction
-    session.startTransaction();
-
-    const { comment, rating } = req.body;
-
-    const data = {
-      author: req.userData.userId,
-      accommodation: req.accommodation._id,
-      comment,
-      rating,
-      status: req.userData.role === "admin" ? "verified" : "pending",
-    };
-
-    let review;
-    try {
-      review = new Review(data);
-    } catch (err) {
-      return next(
-        new HttpError("Invalid inputs passed, please check your data.", 422)
-      );
-    }
-    try {
-      await review.save({ session });
-      await review.populate("accommodation").execPopulate();
-
-      review.accommodation.reviews.push(review.id);
-
-      await review.accommodation.save({ session });
-      await session.commitTransaction();
-
-      // await session.abortTransaction();
-    } catch (err) {
-      return next(new HttpError("Something went wrong", 500));
-    }
-
-    res.json({ review: { ...data, _id: review.id } });
   },
 };
