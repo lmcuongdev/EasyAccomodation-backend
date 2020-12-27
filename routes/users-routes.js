@@ -28,6 +28,16 @@ router.post("/login", usersController.login);
 router.use(checkAuth);
 
 router.put("/:uid", usersController.updateUser);
+// update password
+router.put(
+  "/:uid/password",
+  [
+    check("old_password").not().isEmpty(),
+    check("password").isLength({ min: 6 }),
+    check("repeat_password").isLength({ min: 6 }),
+  ],
+  usersController.updatePassword
+);
 
 router.get("/:uid/accommodations", accommodationsControllers.getAllByUserId);
 

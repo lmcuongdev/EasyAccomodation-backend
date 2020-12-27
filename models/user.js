@@ -42,7 +42,7 @@ userSchema.plugin(mongooseLeanVirtuals);
 userSchema.virtual("protected").get(function () {
   if (this.role === "admin") return [];
 
-  const common = ["email", "favorites", "role"];
+  const common = ["email", "favorites", "role", "password"];
   if (this.role === "owner" && !this.owner_info.is_verified) {
     return common.concat(["owner_info.is_verified"]);
   }

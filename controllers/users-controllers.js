@@ -7,6 +7,8 @@ const { deletePropertyPath } = require("../util/helper");
 
 const HttpError = require("../models/http-error");
 const User = require("../models/user");
+const { findById } = require("../models/user");
+const { use } = require("../routes/users-routes");
 
 const createToken = (data) => {
   return jwt.sign(data, process.env.JWT_KEY, { expiresIn: "1w" });
@@ -228,5 +230,33 @@ module.exports = {
       ...existingUser.toObject(),
       token: token,
     });
+  },
+
+  updatePassword: async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return next(
+        new HttpError("Invalid inputs passed, please check your data.", 422)
+      );
+    }
+
+    const user = await User.findById(req.userData.userId);
+    const { old_password, password, repeat_password } = req.body;
+
+    // check if input current password is correct
+    const isValidPassword = await bcrypt.compare(old_password, user.password);
+
+    // check if inputs are correct
+    if (!isValidPassword || password !== repeat_password) {
+      const error = new HttpError("Invalid password inputs", 401);
+      return next(error);
+    }
+
+    // hash the pass word and save to the database;
+    const hashed = await bcrypt.hash(password, 8);
+    user.password = hashed;
+    await user.save();
+
+    res.json({ message: "Update password successfully" });
   },
 };
