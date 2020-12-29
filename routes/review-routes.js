@@ -7,6 +7,6 @@ const isAdmin = require("../middleware/is-admin");
 
 const router = express.Router();
 
-router.get("/", checkAuth, isAdmin, reviewsControllers.getAll);
+router.get("/", checkAuth, reviewsControllers.getAll);
 
 module.exports = router;
