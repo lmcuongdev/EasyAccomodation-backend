@@ -8,6 +8,11 @@ const User = require("../models/user");
 const Accommodation = require("../models/accommodation");
 
 module.exports = {
+	addView: async (req, res, next) => {
+		req.accommodation.views += 1;
+		req.accommodation.save();
+	},
+
 	getAll: async (req, res, next) => {
 		let accommodations;
 		try {

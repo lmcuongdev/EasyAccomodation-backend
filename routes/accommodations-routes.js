@@ -13,6 +13,7 @@ const router = express.Router();
 
 router.get("/", accommodControllers.getAll);
 router.get("/:aid", isAccommod, accommodControllers.getOne);
+router.get("/:aid/addview", isAccommod, accommodControllers.addView);
 
 router.get("/:aid/reviews", isAccommod, reviewsControllers.getAllByAccommodId);
 router.get("/:aid/reports", isAccommod, reportsControllers.getAllByAccommodId);
@@ -21,17 +22,17 @@ router.get("/:aid/reports", isAccommod, reportsControllers.getAllByAccommodId);
 router.use(checkAuth);
 
 router.post(
-  "/create",
-  // fileUpload.single("image"),
-  [
-    check("type").isIn([
-      "motel",
-      "mini-apartment",
-      "apartment",
-      "detached-house",
-    ]),
-  ],
-  accommodControllers.create
+	"/create",
+	// fileUpload.single("image"),
+	[
+		check("type").isIn([
+			"motel",
+			"mini-apartment",
+			"apartment",
+			"detached-house",
+		]),
+	],
+	accommodControllers.create
 );
 router.put("/:aid", isAccommod, accommodControllers.update);
 router.delete("/:aid", isAccommod, accommodControllers.delete);
