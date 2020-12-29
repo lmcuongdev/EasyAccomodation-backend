@@ -77,4 +77,20 @@ module.exports = {
 		}
 		res.json({ reviews });
 	},
+
+	update: async (req, res, next) => {
+		let review;
+		try {
+			review = await Review.findById(req.params.rid);
+			review.status = review.status === "verified" ? "pending" : "verified";
+			review.save();
+		} catch (err) {
+			const error = new HttpError(
+				"Fetching reviews failed, please try again later.",
+				500
+			);
+			return next(error);
+		}
+		res.json({ review });
+	},
 };

@@ -9,4 +9,6 @@ const router = express.Router();
 
 router.get("/", checkAuth, reviewsControllers.getAll);
 
+router.put("/:rid", checkAuth, reviewsControllers.update);
+
 module.exports = router;

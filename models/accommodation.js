@@ -53,7 +53,14 @@ const accommodationSchema = mongoose.Schema(
 			// Mô tả thêm
 			type: String,
 		},
-		images: [{ type: String, required: true }],
+		images: {
+			type: Array,
+			default: [
+				"https://imhotel.com/wp-content/uploads/2020/01/INDULGENCE-1-700x450.jpg",
+				"https://imhotel.com/wp-content/uploads/2020/01/INDULGENCE-2-700x450.jpg",
+				"https://imhotel.com/wp-content/uploads/2020/01/INDULGENCE-1-700x450.jpg",
+			],
+		},
 		// Tình trạng phòng hiện tại còn trống hay đã cho thuê. False là còn trống
 		is_available: { type: Boolean, required: true, default: true },
 		// Phòng trọ đã được duyệt bởi admin, "pending","verified","not_verified"
@@ -106,7 +113,6 @@ const accommodationSchema = mongoose.Schema(
 accommodationSchema.statics.protected = [
 	"reviews",
 	"reviews",
-	"images",
 	"status",
 	"owner",
 	"views",
