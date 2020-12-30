@@ -86,9 +86,9 @@ module.exports = {
 
 		if (!isAdmin) {
 			// not allowed to pass
-			if (!accommod.belongsTo(userId) || accommod.is_verified) {
-				return next(new HttpError("You are not allowed", 403));
-			}
+			// if (!accommod.belongsTo(userId) || accommod.is_verified) {
+			// 	return next(new HttpError("You are not allowed", 403));
+			// }
 
 			// user is owner
 			// filter update data for mass assignment if user is owner
